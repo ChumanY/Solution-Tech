@@ -102,6 +102,7 @@ export default function ChatPage() {
     },
     onSuccess: () => {
       refetch();
+      refetchAllMessages();
     },
   });
 
@@ -282,7 +283,7 @@ export default function ChatPage() {
             setEditingChatName={setEditingChatName}
             theme={theme}
             setTheme={setTheme}
-            getMessagesForChat={chatId => Array.isArray(allMessages[chatId]) ? allMessages[chatId] : []}
+            allMessages={allMessages}
             collapsed={isMobile}
           />
         </div>

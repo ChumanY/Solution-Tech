@@ -14,6 +14,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ open, title, message, onC
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-30" />
       <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 min-w-[300px]">
+        {title && <h2 className="text-lg font-bold mb-2">{title}</h2>}
+        <p className="mb-4 text-gray-800 dark:text-gray-200">{message}</p>
         <div className="flex justify-end gap-2">
           <button
             className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"

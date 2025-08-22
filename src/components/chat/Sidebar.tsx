@@ -17,7 +17,7 @@ interface SidebarProps {
     setEditingChatName: (name: string) => void;
     theme: string;
     setTheme: (theme: string) => void;
-    getMessagesForChat: (chatId: number) => { text: string }[];
+    allMessages: Record<number, { text: string }[]>;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -33,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     setEditingChatName,
     theme,
     setTheme,
-    getMessagesForChat,
+    allMessages,
     collapsed = false,
 }) => {
     const [search, setSearch] = React.useState("");
@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [chatToDelete, setChatToDelete] = React.useState<number | null>(null);
     const filteredChats = search.trim()
         ? chats.filter(chat =>
-            getMessagesForChat(chat.id).some(msg => msg.text.toLowerCase().includes(search.toLowerCase()))
+            (allMessages[chat.id] || []).some(msg => msg.text.toLowerCase().includes(search.toLowerCase()))
         )
         : chats;
     return (
