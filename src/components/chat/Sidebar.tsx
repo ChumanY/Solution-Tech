@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import ChatSearch from "./ChatSearch";
 
 interface SidebarProps {
+    collapsed?: boolean;
     chats: { id: number; name: string }[];
     activeChatId: number;
     onNewChat: () => void;
@@ -33,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     theme,
     setTheme,
     getMessagesForChat,
+    collapsed = false,
 }) => {
     const [search, setSearch] = React.useState("");
     const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -43,9 +45,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         )
         : chats;
     return (
-        <aside className="w-64 border-r bg-muted flex flex-col p-4">
+        <aside className="w-64 h-full border-r bg-muted flex flex-col p-4">
             <div className="flex items-center justify-between mb-4">
-                <span className="font-bold text-lg">Chats</span>
+                <span className={`font-bold text-lg${collapsed ? ' invisible' : ''}`}>Chats</span>
                 <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={onNewChat}>+ Nuevo</Button>
                     <Button variant="outline" size="sm" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? "🌙" : "☀️"}</Button>

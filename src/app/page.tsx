@@ -15,6 +15,9 @@ interface Message {
 
 
 export default function ChatPage() {
+  const handleNewChat = () => {
+    createChatMutation.mutate();
+  };
 
   const [editingChatId, setEditingChatId] = useState<number | null>(null);
   const [editingChatName, setEditingChatName] = useState("");
@@ -116,7 +119,35 @@ export default function ChatPage() {
     setInput("");
   };
 
-  // Nuevo chat
+  // Estados y referencias para drag & drop y archivos
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState("");
+  const [showFileOptions, setShowFileOptions] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+
+  // Función para convertir archivo a base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   const createChatMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/chats", {
@@ -132,37 +163,6 @@ export default function ChatPage() {
       queryClient.invalidateQueries({ queryKey: ["messages", data.id] });
     },
   });
-  const handleNewChat = () => {
-    createChatMutation.mutate();
-  };
-
-
-  const imageInputRef = useRef<HTMLInputElement | null>(null);
-  const pdfInputRef = useRef<HTMLInputElement | null>(null);
-  const videoInputRef = useRef<HTMLInputElement | null>(null);
-  const [showFileOptions, setShowFileOptions] = useState(false);
-  const [fileError, setFileError] = useState("");
-  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-
-  useLayoutEffect(() => {
-    if (scrollAreaRef.current) {
-      setTimeout(() => {
-        scrollAreaRef.current?.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: "smooth" });
-      }, 0);
-    }
-  }, [messages, input]);
-
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -251,25 +251,42 @@ export default function ChatPage() {
   }, [fileError]);
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar
-        chats={chats}
-        activeChatId={activeChatId}
-        onNewChat={handleNewChat}
-        onSetActiveChat={id => {
-          setActiveChatId(id);
-          queryClient.invalidateQueries({ queryKey: ["messages", id] });
-        }}
-        onEditChat={(id, name) => editChatMutation.mutate({ id, name })}
-        onDeleteChat={id => deleteChatMutation.mutate(id)}
-        editingChatId={editingChatId}
-        editingChatName={editingChatName}
-        setEditingChatId={setEditingChatId}
-        setEditingChatName={setEditingChatName}
-        theme={theme}
-        setTheme={setTheme}
-        getMessagesForChat={chatId => Array.isArray(allMessages[chatId]) ? allMessages[chatId] : []}
-      />
+    <div className="flex h-screen bg-background relative">
+      {isMobile && (
+        <button
+          className="absolute top-4 left-4 z-30 p-2 rounded-md bg-muted text-2xl shadow-lg"
+          onClick={() => setSidebarOpen(prev => !prev)}
+        >
+          &#9776;
+        </button>
+      )}
+      {(!isMobile || sidebarOpen) && (
+        <div
+          className={`fixed inset-0 z-20 bg-black bg-opacity-40 md:static md:bg-transparent md:z-auto ${isMobile ? "w-64" : ""}`}
+          onClick={() => isMobile && setSidebarOpen(false)}
+        >
+          <Sidebar
+            chats={chats}
+            activeChatId={activeChatId}
+            onNewChat={handleNewChat}
+            onSetActiveChat={id => {
+              setActiveChatId(id);
+              queryClient.invalidateQueries({ queryKey: ["messages", id] });
+              if (isMobile) setSidebarOpen(false);
+            }}
+            onEditChat={(id, name) => editChatMutation.mutate({ id, name })}
+            onDeleteChat={id => deleteChatMutation.mutate(id)}
+            editingChatId={editingChatId}
+            editingChatName={editingChatName}
+            setEditingChatId={setEditingChatId}
+            setEditingChatName={setEditingChatName}
+            theme={theme}
+            setTheme={setTheme}
+            getMessagesForChat={chatId => Array.isArray(allMessages[chatId]) ? allMessages[chatId] : []}
+            collapsed={isMobile}
+          />
+        </div>
+      )}
       <main className="flex flex-col flex-1 h-full w-full max-w-3xl mx-auto bg-background">
         <ChatArea
           messages={messages}
